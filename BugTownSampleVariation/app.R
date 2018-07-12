@@ -22,7 +22,7 @@ bugSampDF <- read.csv("example.csv", header=TRUE) %>%
     separate(samp, into = paste0("n",1:5), sep=",", remove=TRUE) %>%
     gather(key="n",value="Apt", -c(id,method) ) %>%
   select(-n)
-
+bugSampDF$Apt <- as.numeric(bugSampDF$Apt)
 
 ui <- fluidPage(
    
@@ -46,14 +46,16 @@ ui <- fluidPage(
 
 # Define server logic
 server <- function(input, output) {
-df <- reactive({
-     bugSampTermDF <- filter(bugSampDF, term=input$term)
-})
+#df <- reactive({
+#     bugSampTermDF <- bugSampDF#filter(bugSampDF, term=input$term)
+#})
    output$apartPlot <- renderPlot({
-     students <- sum(bugSampTermDF$method3)/5
-     left_join(bugtownDF, bugSampTermDF) %>%
-     ggplot(aes(x=Xcoord, y=Ycoord, alpha=(method2+method3)/students))+
-       geom_tile(col="black", fill="white", size=1)+
+     students <- length(unique(bugSampDF$id))
+     sampCntDF <- bugSampDF %>% group_by(Apt) %>%
+       summarise(method2 = sum(method=="area2"), method3 = sum(method=="area3"))
+     left_join(bugtownDF, sampCntDF, by=c("apartNumber" = "Apt")) %>%
+     ggplot(aes(x=Xcoord, y=Ycoord)+
+       geom_tile(aes(col=ifelse(method2>method3, "red","blue"), alpha=(method2+method3)/students)), fill="white", size=1)+
        geom_text(aes(label=apartNumber))+theme_void()
    })
    output$scatter <- renderPlot({
