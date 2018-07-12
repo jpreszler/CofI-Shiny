@@ -10,6 +10,7 @@
 library(shiny)
 library(dplyr)
 library(ggplot2)
+library(stringr)
 
 #get data
 bugtownDF <- read.csv("data.org", sep="|", header=TRUE, strip.white = TRUE)
@@ -35,8 +36,22 @@ ui <- fluidPage(
      
        # Show a plot of the generated distribution
       mainPanel(
-        h3("BugTown Appartments"),
-         plotOutput("apartPlot", height = "700px")#,
+        tabsetPanel(type="tabs",
+            tabPanel("plot",h3("BugTown Appartments"),
+                plotOutput("apartPlot", height = "700px")),
+            tabPanel("area submission", 
+                     textInput("area2", label = h3("Apts. For Method 2:"), value = "Enter Apt. numbers sep. by commas..."),
+                     
+                     hr(),
+                     fluidRow(column(4, verbatimTextOutput("value2"))),
+                     hr(),
+                     textInput("area3", label = h3("Apts. For Method 3:"), value = "Enter Apt. numbers sep. by commas..."),
+                     
+                     hr(),
+                     fluidRow(column(4, verbatimTextOutput("value3"))),
+                     actionButton("submit", "Submit", class = "btn-primary")
+            )
+            )         #,
         #h4("Area Information"),
 #        dataTableOutput("sampArea")
       )
@@ -63,10 +78,27 @@ server <- function(input, output) {
      ggplot(reactBTsamp(), aes(x=Xcoord, y=Ycoord))+geom_tile(col="black", fill="white", size=1)+geom_text(aes(label=apartNumber))+theme_void()
    })
    
+   output$value2 <- renderPrint({ input$area2 })
+   output$value3 <- renderPrint({ input$area3})
    
    output$sampArea <- renderDataTable({
           reactBTsamp() %>% dplyr::select(apartNumber, area) %>% transmute(Apartment=apartNumber, area=area) %>% group_by(Apartment) %>% summarise(Area=mean(area))
    }, options = list(searching=FALSE))
+
+#to only allow submit with valid input, needs work
+#   observe({
+     # check if all mandatory fields have a value
+#     mandatoryFilled <-
+#       vapply(c(input$area2,input$area3),
+#              function(x) {
+#                str_detect(x, "[:digit:]+,[:digit:]+,[:digit:]+,[:digit:]+,[:digit:]+")
+#                },
+#              logical(1))
+#     mandatoryFilled <- all(mandatoryFilled)
+     
+     # enable/disable the submit button
+#     shinyjs::toggleState(id = "submit", condition = mandatoryFilled)
+#   })
 }
 
 # Run the application 

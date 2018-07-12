@@ -52,9 +52,11 @@ server <- function(input, output) {
    output$apartPlot <- renderPlot({
      students <- length(unique(bugSampDF$id))
      sampCntDF <- bugSampDF %>% group_by(Apt) %>%
-       summarise(method2 = sum(method=="area2"), method3 = sum(method=="area3"), maxMeth=as.factor(ifelse(method2>method3, "Method 2", "Method 3")))
+       summarise(method2 = sum(method=="area2"), method3 = sum(method=="area3"), 
+                 maxMeth=as.factor(ifelse(method2>method3, "Method 2", "Method 3")),
+                 Select = 3*(method2+method3)/students)
      left_join(bugtownDF, sampCntDF, by=c("apartNumber" = "Apt")) %>%
-     ggplot(aes(x=Xcoord, y=Ycoord, fill=maxMeth, alpha=(method2+method3)/students))+
+     ggplot(aes(x=Xcoord, y=Ycoord, fill=maxMeth, alpha=Select))+
        geom_tile(size=1)+
        geom_text(aes(label=apartNumber))+theme_void()
    })
