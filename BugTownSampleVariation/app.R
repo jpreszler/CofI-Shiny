@@ -10,40 +10,45 @@
 library(shiny)
 library(ggplot2)
 library(dplyr)
+library(tidyr)
 
 #get data
 bugtownDF <- read.csv("data.org", sep="|", header=TRUE, strip.white = TRUE)
 #clean
 bugtownDF <- filter(bugtownDF, !is.na(apartNumber))
 
-#bugSampDF <- read.csv("example.csv", header=TRUE)
+#read, split, and reshape data
+bugSampDF <- read.csv("example.csv", header=TRUE) %>% 
+    separate(samp, into = paste0("n",1:5), sep=",", remove=TRUE) %>%
+    gather(key="n",value="Apt", -c(id,method) ) %>%
+  select(-n)
 
 
-# Define UI for application that draws a histogram
 ui <- fluidPage(
    
-   # Application title
    titlePanel("BugTown Apartment Sample Variation"),
    
-   # Sidebar with a slider input for number of bins 
    sidebarLayout(
       sidebarPanel(
         selectInput("term", "Semester to view:", 
-                    choices = c(example, f18="Fall 2018"))
+                    choices = c(example = "Example", f18="Fall 2018"))
       ),
       
-      # Show a plot of the generated distribution
       mainPanel(
-         plotOutput("apartPlot"),
-         plotOutput("apartHist")
+        tabsetPanel(type="tabs",
+                    tabPanel("Apartment Plot", plotOutput("apartPlot")),
+                    tabPanel("Histogram", plotOutput("apartHist")),
+                    tabPanel("Table", tableOutput("table"))
+        )
       )
    )
 )
 
 # Define server logic
 server <- function(input, output) {
-   bugSampTermDF <- bugSampDF#filter(bugSampDF, term=input$term)
-   
+df <- reactive({
+     bugSampTermDF <- filter(bugSampDF, term=input$term)
+})
    output$apartPlot <- renderPlot({
      students <- sum(bugSampTermDF$method3)/5
      left_join(bugtownDF, bugSampTermDF) %>%
@@ -51,7 +56,7 @@ server <- function(input, output) {
        geom_tile(col="black", fill="white", size=1)+
        geom_text(aes(label=apartNumber))+theme_void()
    })
-   output$scatter <- rednerPlot({
+   output$scatter <- renderPlot({
      
    })
 }
