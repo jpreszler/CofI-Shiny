@@ -54,6 +54,7 @@ ui <- fluidPage(
         tabsetPanel(type="tabs",
                     tabPanel("Apartment Plot", plotOutput("apartPlot")),
                     tabPanel("Histogram", plotOutput("apartHist")),
+                    tabPanel("Scatter Plot", plotOutput("scatter")),
                     tabPanel("Table", dataTableOutput("table"))
         )
       )
@@ -78,13 +79,20 @@ server <- function(input, output) {
        geom_text(aes(label=apartNumber))+theme_void()
    })
    output$apartHist <- renderPlot({
-     bugSampDF %>% 
-     ggplot(aes(x=Apt, fill=as.factor(method)))+
+     bugSampDF %>% filter(Apt>0, Apt<101) %>%
+     ggplot(aes(x=Apt, fill=method))+
        geom_histogram(position = "dodge", bins=100)
    })
+   output$scatter <- renderPlot({
+     results %>% 
+       select(apartNumber, area, method2,method3) %>% 
+       group_by(apartNumber) %>% summarise(Area = max(area), Method2 = max(method2), Method3 = max(method3), Max.Method = as.factor(ifelse(Method2>Method3, "Method 2", "Method 3"))) %>%
+       ggplot(aes(x=Method3, y=Method2, size=Area, col=Max.Method))+
+       geom_point(alpha=0.6, position = "dodge")+geom_text(aes(label=apartNumber), col="black", size=5)
+   })
    output$table <- renderDataTable({results %>% 
-       select(apartNumber, area, method2,method3,maxMeth) %>% 
-       group_by(apartNumber) %>% summarise(Area = max(area), Method2 = max(method2), Method3 = max(method3))})
+       select(apartNumber, area, method2,method3) %>% 
+       group_by(apartNumber) %>% summarise(Area = max(area), Method2 = max(method2), Method3 = max(method3), Max.Method = as.factor(ifelse(Method2>Method3, "Method 2", "Method 3")))})
 }
 
 # Run the application 
