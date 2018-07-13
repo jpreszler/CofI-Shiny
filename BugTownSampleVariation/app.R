@@ -54,7 +54,7 @@ ui <- fluidPage(
         tabsetPanel(type="tabs",
                     tabPanel("Apartment Plot", plotOutput("apartPlot")),
                     tabPanel("Histogram", plotOutput("apartHist")),
-                    tabPanel("Table", tableOutput("table"))
+                    tabPanel("Table", dataTableOutput("table"))
         )
       )
    )
@@ -63,22 +63,28 @@ ui <- fluidPage(
 # Define server logic
 server <- function(input, output) {
 #df <- reactive({
-     bugSampDF <- samples#filter(bugSampDF, term=input$term)
+    # bugSampDF <- samples#filter(bugSampDF, term=input$term)
 #})
-   output$apartPlot <- renderPlot({
      students <- length(unique(bugSampDF$id))
      sampCntDF <- bugSampDF %>% group_by(Apt) %>%
        summarise(method2 = sum(method=="area2"), method3 = sum(method=="area3"), 
                  maxMeth=as.factor(ifelse(method2>method3, "Method 2", "Method 3")),
                  Select = 3*(method2+method3)/students)
-     left_join(bugtownDF, sampCntDF, by=c("apartNumber" = "Apt")) %>%
-     ggplot(aes(x=Xcoord, y=Ycoord, fill=maxMeth, alpha=Select))+
+     results<-left_join(bugtownDF, sampCntDF, by=c("apartNumber" = "Apt"))
+       
+   output$apartPlot <- renderPlot({
+     ggplot(results,aes(x=Xcoord, y=Ycoord, fill=maxMeth, alpha=Select))+
        geom_tile(size=1)+
        geom_text(aes(label=apartNumber))+theme_void()
    })
-   output$scatter <- renderPlot({
-     
+   output$apartHist <- renderPlot({
+     bugSampDF %>% 
+     ggplot(aes(x=Apt, fill=as.factor(method)))+
+       geom_histogram(position = "dodge", bins=100)
    })
+   output$table <- renderDataTable({results %>% 
+       select(apartNumber, area, method2,method3,maxMeth) %>% 
+       group_by(apartNumber) %>% summarise(Area = max(area), Method2 = max(method2), Method3 = max(method3))})
 }
 
 # Run the application 
