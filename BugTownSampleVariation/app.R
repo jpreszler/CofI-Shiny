@@ -11,13 +11,29 @@ library(shiny)
 library(ggplot2)
 library(dplyr)
 library(tidyr)
+library(googlesheets)
 
 #get data
 bugtownDF <- read.csv("data.org", sep="|", header=TRUE, strip.white = TRUE)
 #clean
 bugtownDF <- filter(bugtownDF, !is.na(apartNumber))
 
-#read, split, and reshape data
+gs_auth(token="shiny_token.rds")
+samples_gs <- gs_key("1Q_DsqB1roB2OJyAhlqaEMOJ6Qa_lYKZa3QUNn2BHUno")
+#read submitted data
+samples <- gs_read(samples_gs) %>% mutate(id = 1:length(area2)) %>% 
+  gather(key="method", value="samp", -id)
+
+#clean submitted data
+samples$samp <- str_remove_all(samples$samp, "[:space:]+")
+samples <- filter(samples, 
+                  str_detect(samples$samp, "[:digit:]+,[:digit:]+,[:digit:]+,[:digit:]+,[:digit:]+"))%>% 
+  separate(samp, into = paste0("n",1:5), sep=",", remove=TRUE) %>%
+  gather(key="n",value="Apt", -c(id,method) ) %>%
+  select(-n)
+samples$Apt <- as.numeric(samples$Apt)
+
+#read, split, and reshape example data
 bugSampDF <- read.csv("example.csv", header=TRUE) %>% 
     separate(samp, into = paste0("n",1:5), sep=",", remove=TRUE) %>%
     gather(key="n",value="Apt", -c(id,method) ) %>%
@@ -47,7 +63,7 @@ ui <- fluidPage(
 # Define server logic
 server <- function(input, output) {
 #df <- reactive({
-#     bugSampTermDF <- bugSampDF#filter(bugSampDF, term=input$term)
+     bugSampDF <- samples#filter(bugSampDF, term=input$term)
 #})
    output$apartPlot <- renderPlot({
      students <- length(unique(bugSampDF$id))
