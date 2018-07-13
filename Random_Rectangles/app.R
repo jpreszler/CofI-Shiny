@@ -82,15 +82,18 @@ server <- function(input, output) {
      #plot sampled appartments
      ggplot(reactBTsamp(), aes(x=Xcoord, y=Ycoord))+geom_tile(col="black", fill="white", size=1)+geom_text(aes(label=apartNumber))+theme_void()
    })
-   
-   observeEvent(
+
+   #using eventReactive instead of observeEvent to only return
+   #submitted data for each press of submit
+   vals <- eventReactive(
      input$submit,{
-     gs_add_row(subSheet, input = c(input$area2,input$area3))
-       output$value2 <- renderPrint({ input$area2 })
-       output$value3 <- renderPrint({ input$area3})
-#       session$sendCustomMessage(type='testmessage', message = "Your Submission was recorded.")
-   })
-   
+       gs_add_row(subSheet, input = c(input$area2,input$area3))
+       data.frame(area2=input$area2, area3=input$area3)
+     }
+   )
+   output$value2 <- renderPrint({ vals()$area2})
+   output$value3 <- renderPrint({ vals()$area3})
+
    output$sampArea <- renderDataTable({
           reactBTsamp() %>% dplyr::select(apartNumber, area) %>% transmute(Apartment=apartNumber, area=area) %>% group_by(Apartment) %>% summarise(Area=mean(area))
    }, options = list(searching=FALSE))
