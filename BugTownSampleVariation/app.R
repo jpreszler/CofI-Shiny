@@ -58,7 +58,9 @@ ui <- fluidPage(
                     tabPanel("Apartment Plot", plotOutput("apartPlot")),
                     tabPanel("Histogram", plotOutput("apartHist")),
                     tabPanel("Scatter Plot", plotOutput("scatter")),
-                    tabPanel("Table", dataTableOutput("table"))
+                    tabPanel("Table", dataTableOutput("table")),
+                    tabPanel("Area Boxplots", plotOutput("sampBox")),
+                    tabPanel("Area Summary", dataTableOutput("sampSum"))
         )
       )
    )
@@ -66,17 +68,19 @@ ui <- fluidPage(
 
 # Define server logic
 server <- function(input, output) {
+
+#Reactive block
 df <- reactive({
      bugSampDF[bugSampDF$term==input$termSelect,]
 })
-     students <- reactive({length(unique(df()$id))})
-     sampCntDF <- reactive({df() %>% group_by(Apt) %>%
-       summarise(method2 = sum(method=="area2"), method3 = sum(method=="area3"), 
-                 maxMeth=as.factor(ifelse(method2>method3, "Method 2", "Method 3")),
-                 Select = 3*(method2+method3)/students())})
-     results<-reactive({left_join(bugtownDF, sampCntDF(), by=c("apartNumber" = "Apt"))})
-       
-   output$apartPlot <- renderPlot({
+ students <- reactive({length(unique(df()$id))})
+ sampCntDF <- reactive({df() %>% group_by(Apt) %>%
+ summarise(method2 = sum(method=="area2"), method3 = sum(method=="area3"), 
+             maxMeth=as.factor(ifelse(method2>method3, "Method 2", "Method 3")),
+             Select = 3*(method2+method3)/students())})
+ results<-reactive({left_join(bugtownDF, sampCntDF(), by=c("apartNumber" = "Apt"))})
+
+ output$apartPlot <- renderPlot({
      ggplot(results(),aes(x=Xcoord, y=Ycoord, fill=maxMeth, alpha=Select))+
        geom_tile(size=1)+
        geom_text(aes(label=apartNumber))+theme_void()
@@ -95,9 +99,26 @@ df <- reactive({
    })
    output$table <- renderDataTable({results() %>% 
        select(apartNumber, area, method2,method3) %>% 
-       group_by(apartNumber) %>% summarise(Area = max(area), Method2 = max(method2), Method3 = max(method3), Max.Method = as.factor(ifelse(Method2>Method3, "Method 2", "Method 3")))})
-}
-
+       group_by(apartNumber) %>% summarise(Area = max(area), Method2 = max(method2), Method3 = max(method3), Max.Method = as.factor(ifelse(Method2>Method3, "Method 2", "Method 3")))
+     })
+  output$sampBox <- renderPlot({
+    inner_join(
+      select(df(), id, method, Apt),
+      select(results(), apartNumber, area), 
+      by=c("Apt"="apartNumber") ) %>% 
+      group_by(id, method) %>% summarise(areaEst = mean(area)) %>%
+      ggplot(aes(x=method, y=areaEst, col=method))+geom_boxplot()
+  })
+  output$sampSum <- renderDataTable({
+    inner_join(
+      select(df(), id, method, Apt),
+      select(results(), apartNumber, area), 
+      by=c("Apt"="apartNumber") ) %>% 
+      group_by(id, method) %>% summarise(areaEst = mean(area)) %>%
+      group_by(method) %>% summarise(n=n(), mean = mean(areaEst), median = median(areaEst), sd = sd(areaEst) )
+  })
+   }
+  
 # Run the application 
 shinyApp(ui = ui, server = server)
 
