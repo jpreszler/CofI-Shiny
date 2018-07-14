@@ -5,8 +5,8 @@ account: jpreszler
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 380978
-bundleId: 1480605
+bundleId: 1480610
 url: https://jpreszler.shinyapps.io/BugTownSampleVariation/
-when: 1531584460.06796
+when: 1531584755.25662
 asMultiple: FALSE
 asStatic: FALSE

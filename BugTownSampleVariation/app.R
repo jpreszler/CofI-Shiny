@@ -12,6 +12,7 @@ library(ggplot2)
 library(dplyr)
 library(tidyr)
 library(stringr)
+library(markdown)
 library(googlesheets)
 
 #get data
