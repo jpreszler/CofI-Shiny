@@ -1,5 +1,5 @@
 ## Description
-This app provides several visualizations and tables to examine data submitted via the [Random Rectangles](jpreszler.shinyapps.io/RandRectangles) app.
+This app provides several visualizations and tables to examine data submitted via the [Random Rectangles](jpreszler.shinyapps.io/Random_Rectangles) app.
 
 The purpose is to compare humans "random" choice (method2) versus true random sampling (method3).
 

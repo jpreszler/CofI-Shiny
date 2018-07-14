@@ -11,6 +11,7 @@ library(shiny)
 library(ggplot2)
 library(dplyr)
 library(tidyr)
+library(stringr)
 library(googlesheets)
 
 #get data
