@@ -13,6 +13,11 @@ library(ggplot2)
 library(stringr)
 library(googlesheets)
 
+#######
+#UPDATE EACH TERM?
+#######
+term<- "SU18"
+
 #get data
 bugtownDF <- read.csv("data.org", sep="|", header=TRUE, strip.white = TRUE)
 #clean
@@ -87,7 +92,7 @@ server <- function(input, output) {
    #submitted data for each press of submit
    vals <- eventReactive(
      input$submit,{
-       gs_add_row(subSheet, input = c(input$area2,input$area3))
+       gs_add_row(subSheet, input = c(input$area2,input$area3,term))
        data.frame(area2=input$area2, area3=input$area3)
      }
    )
