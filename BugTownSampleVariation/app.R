@@ -50,7 +50,9 @@ ui <- fluidPage(
       sidebarPanel(
         selectInput("termSelect", "Semester to view:", 
                     unique(bugSampDF$term)#, f18="Fall 2018")
-                    )
+                    ),
+        div(id = "description", includeMarkdown("description.md"))
+        
       ),
       
       mainPanel(
