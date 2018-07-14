@@ -46,7 +46,7 @@ ui <- fluidPage(
       mainPanel(
         tabsetPanel(type="tabs",
             tabPanel("Instructions",includeMarkdown("instructions.md")),
-            tabPanel("BugTown Apartments",h3("BugTown Appartments"),
+            tabPanel("BugTown Apartments",h3("BugTown Apartments"),
                 plotOutput("apartPlot", height = "700px")),
             tabPanel("area submission", 
                      

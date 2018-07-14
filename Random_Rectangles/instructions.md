@@ -1,7 +1,7 @@
 ## Instructions
 The goal of this activity is to compare your naive idea of "random" sampling with true random sampling. To do this, you will estimate the average (mean) area of "BugTown" appartments by:
 
-* **Method 1** Looking at the page of all apartments and estimating the average area. Spend approximately 10-15 seconds surveying the appartments, don't spend time calculating anything.
+* **Method 1** Look at the page of all apartments and estimate the average area. Spend approximately 10-15 seconds surveying the appartments, don't spend time calculating anything.
 
 * **Method 2** Spend approximately 10-15 seconds and select **5** apartment numbers that you believe represent all apartments in BugTown. This is your naive "random" sample, record the apartment numbers for later.
 
