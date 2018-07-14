@@ -1,16 +1,16 @@
+#Random Rectangles Shiny App
+# 
+# Created By Jason Preszler, 2018
+# 
+# License: GPLv3
 #
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
 #
 
 library(shiny)
 library(dplyr)
 library(ggplot2)
 library(stringr)
+library(markdown)
 library(googlesheets)
 
 #######
@@ -45,7 +45,8 @@ ui <- fluidPage(
        # Show a plot of the generated distribution
       mainPanel(
         tabsetPanel(type="tabs",
-            tabPanel("plot",h3("BugTown Appartments"),
+            tabPanel("inst",includeMarkdown("instructions.md")),
+            tabPanel("BugTown Apartments",h3("BugTown Appartments"),
                 plotOutput("apartPlot", height = "700px")),
             tabPanel("area submission", 
                      
