@@ -5,8 +5,8 @@ account: jpreszler
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 323776
-bundleId: 1321081
+bundleId: 1480746
 url: https://jpreszler.shinyapps.io/Random_Rectangles/
-when: 1523885582.24658
+when: 1531597981.46968
 asMultiple: FALSE
 asStatic: FALSE

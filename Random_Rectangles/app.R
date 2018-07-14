@@ -45,7 +45,7 @@ ui <- fluidPage(
        # Show a plot of the generated distribution
       mainPanel(
         tabsetPanel(type="tabs",
-            tabPanel("inst",includeMarkdown("instructions.md")),
+            tabPanel("Instrustions",includeMarkdown("instructions.md")),
             tabPanel("BugTown Apartments",h3("BugTown Appartments"),
                 plotOutput("apartPlot", height = "700px")),
             tabPanel("area submission", 
