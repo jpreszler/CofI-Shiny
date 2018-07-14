@@ -49,9 +49,9 @@ ui <- fluidPage(
                 plotOutput("apartPlot", height = "700px")),
             tabPanel("area submission", 
                      
-                     textInput("area2", label = h3("Apts. For Method 2:"), value = "Enter Apt. numbers sep. by commas..."),
+                     textInput("method2", label = h3("Apts. For Method 2:"), value = "Enter Apt. numbers sep. by commas..."),
                      hr(),
-                     textInput("area3", label = h3("Apts. For Method 3:"), value = "Enter Apt. numbers sep. by commas..."),
+                     textInput("method3", label = h3("Apts. For Method 3:"), value = "Enter Apt. numbers sep. by commas..."),
                      #tags$head(tags$script(src = "message-handler.js")),
                     hr(),
                      actionButton("submit", "Submit", class = "btn-primary"),
@@ -92,12 +92,12 @@ server <- function(input, output) {
    #submitted data for each press of submit
    vals <- eventReactive(
      input$submit,{
-       gs_add_row(subSheet, input = c(input$area2,input$area3,term))
-       data.frame(area2=input$area2, area3=input$area3)
+       gs_add_row(subSheet, input = c(input$method2,input$method3,term))
+       data.frame(method2=input$method2, method3=input$method3)
      }
    )
-   output$value2 <- renderPrint({ vals()$area2})
-   output$value3 <- renderPrint({ vals()$area3})
+   output$value2 <- renderPrint({ vals()$method2})
+   output$value3 <- renderPrint({ vals()$method3})
 
    output$sampArea <- renderDataTable({
           reactBTsamp() %>% dplyr::select(apartNumber, area) %>% transmute(Apartment=apartNumber, area=area) %>% group_by(Apartment) %>% summarise(Area=mean(area))

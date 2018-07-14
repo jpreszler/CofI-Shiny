@@ -21,7 +21,7 @@ bugtownDF <- filter(bugtownDF, !is.na(apartNumber))
 gs_auth(token="shiny_token.rds")
 samples_gs <- gs_key("1Q_DsqB1roB2OJyAhlqaEMOJ6Qa_lYKZa3QUNn2BHUno")
 #read submitted data
-samples <- gs_read(samples_gs) %>% mutate(id = 1:length(area2)) %>% 
+samples <- gs_read(samples_gs) %>% mutate(id = 1:length(method2)) %>% 
   gather(key="method", value="samp", -c(id,term))
 
 #clean submitted data
@@ -75,8 +75,8 @@ df <- reactive({
 })
  students <- reactive({length(unique(df()$id))})
  sampCntDF <- reactive({df() %>% group_by(Apt) %>%
- summarise(method2 = sum(method=="area2"), method3 = sum(method=="area3"), 
-             maxMeth=as.factor(ifelse(method2>method3, "Method 2", "Method 3")),
+ summarise(method2 = sum(method=="method2"), method3 = sum(method=="method3"), 
+             maxMeth=as.factor(ifelse(method2>method3, "method2", "method3")),
              Select = 3*(method2+method3)/students())})
  results<-reactive({left_join(bugtownDF, sampCntDF(), by=c("apartNumber" = "Apt"))})
 
@@ -93,13 +93,13 @@ df <- reactive({
    output$scatter <- renderPlot({
      results() %>% 
        select(apartNumber, area, method2,method3) %>% 
-       group_by(apartNumber) %>% summarise(Area = max(area), Method2 = max(method2), Method3 = max(method3), Max.Method = as.factor(ifelse(Method2>Method3, "Method 2", "Method 3"))) %>%
-       ggplot(aes(x=Method3, y=Method2, size=Area, col=Max.Method))+
+       group_by(apartNumber) %>% summarise(Area = max(area), method2 = max(method2), method3 = max(method3), maxMeth = factor(ifelse(method2>method3, "method2", "method3"))) %>%
+       ggplot(aes(x=method3, y=method2, size=Area, col=maxMeth))+
        geom_point(alpha=0.6, position = "dodge")+geom_text(aes(label=apartNumber), col="black", size=5)
    })
    output$table <- renderDataTable({results() %>% 
        select(apartNumber, area, method2,method3) %>% 
-       group_by(apartNumber) %>% summarise(Area = max(area), Method2 = max(method2), Method3 = max(method3), Max.Method = as.factor(ifelse(Method2>Method3, "Method 2", "Method 3")))
+       group_by(apartNumber) %>% summarise(Area = max(area), method2 = max(method2), method3 = max(method3), maxMeth = as.factor(ifelse(method2>method3, "method2", "method3")))
      })
   output$sampBox <- renderPlot({
     inner_join(
