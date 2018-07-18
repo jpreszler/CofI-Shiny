@@ -30,17 +30,24 @@ server <- function(input, output) {
   output$download_data <- downloadHandler(
     filename = function() {
         req(input$canvas)
-        paste('WW-',input$canvas$name,sep='')
+        paste(basename(input$canvas$name),'lst',sep='.')
     },
     content = function(file) {
       req(input$canvas)
       inDF <- read.csv(input$canvas$datapath, header=TRUE) %>% 
-        select(Student, ID, SIS.User.ID, SIS.Login.ID, Section)
+        select(Student, SIS.User.ID, SIS.Login.ID, Section) %>% 
+        filter(!is.na(SIS.User.ID))
       #clean and manipulate
-      
+      inDF$First <- str_split(inDF$Student, " ", n=2, simplify = TRUE)[,1]
+      inDF$Last <- str_split(inDF$Student, " ", n=2, simplify = TRUE)[,2]
+      inDF$blank1 <- " "
+      inDF$blank2 <- " "
+      inDF$C <- "C"
+      inDF$username <- str_split(inDF$SIS.Login.ID, "@", n=2, simplify=TRUE)[,1]
+      inDF <- select(inDF,SIS.User.ID, Last, First, C, blank1, Section, blank2, SIS.Login.ID, username )
       
       #write inDF to file
-      write.csv(inDF,file)
+      write.table(inDF,file, row.names = FALSE, col.names = FALSE, quote = FALSE, sep=",")
     }
   )
 }
