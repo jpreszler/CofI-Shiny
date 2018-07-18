@@ -30,7 +30,7 @@ server <- function(input, output) {
   output$download_data <- downloadHandler(
     filename = function() {
         req(input$canvas)
-        paste(basename(input$canvas$name),'lst',sep='.')
+        str_replace(basename(input$canvas$name),'.csv','.lst')
     },
     content = function(file) {
       req(input$canvas)

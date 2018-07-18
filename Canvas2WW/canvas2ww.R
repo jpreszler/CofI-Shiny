@@ -2,6 +2,9 @@
 #use in R directly since cloud deployment of the app is a FERPA 
 #problem.
 
+library(dplyr)
+library(stringr)
+
 canvas2ww <- function(filename){
   inDF <- read.csv(filename, header=TRUE) %>% 
     select(Student, SIS.User.ID, SIS.Login.ID, Section) %>% 
@@ -16,7 +19,7 @@ canvas2ww <- function(filename){
   inDF <- select(inDF,SIS.User.ID, Last, First, C, blank1, Section, blank2, SIS.Login.ID, username )
   
   #write inDF to file
-  outFile <- paste(basename(filename),'lst', sep = ".")
+  outFile <- str_replace(basename(filename),'.csv','.lst')
   write.table(inDF,outFile, row.names = FALSE, col.names = FALSE, quote = FALSE, sep=",")
   
 }
