@@ -34,7 +34,8 @@ server <- function(input, output) {
     },
     content = function(file) {
       req(input$canvas)
-      inDF <- read.csv(input$canvas$datapath, header=TRUE)
+      inDF <- read.csv(input$canvas$datapath, header=TRUE) %>% 
+        select(Student, ID, SIS.User.ID, SIS.Login.ID, Section)
       #clean and manipulate
       
       
