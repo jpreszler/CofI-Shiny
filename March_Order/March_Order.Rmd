@@ -1,0 +1,85 @@
+---
+title: "March Order"
+author: "CofI-Shiny"
+date: "`r Sys.Date()`"
+header-includes:
+  - \usepackage{booktabs}
+  - \usepackage{float}
+output: pdf_document
+params:
+  full: full.xlsx
+  rsvp: rsvp.xlsx
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(dplyr)
+library(readxl)
+library(knitr)
+library(kableExtra)
+
+```
+
+```{r}
+FullDF <- read_excel(params$full, col_names =TRUE, skip=1) %>% select(LN=`Last Name`, FN=`First Name`,Yrs=`Decimal Years Since Hire Date`) 
+
+RSVP <- read_excel(params$rsvp, col_names = TRUE) %>% select(Name, Response=`Will you be part of the procession for the 2018 Convocation?`) %>% filter(Response == "Yes") %>% separate(col=Name, into = c("FN", "LN"), sep = "[:space:]", extra = 'merge')
+
+retDF <- inner_join(FullDF, RSVP, by=c("LN","FN")) %>% 
+  arrange(desc(Yrs), LN) 
+notComing <- anti_join(FullDF, RSVP, by=c("LN","FN")) %>% 
+  arrange(desc(Yrs), LN)
+
+numRSVP <- length(retDF$LN)
+
+retDF$position <- 1:numRSVP
+notComing$position <- (numRSVP+1):(numRSVP+length(notComing$LN))
+
+```
+
+The following tables provide the march order for faculty and staff. **In the event that someone is not present, the person on the left has priority to move up.**
+
+## Attendees
+The following have confirmed their attendence.
+
+```{r attend}
+lseq <- seq(from=1, to=numRSVP, by=2)
+
+left <- retDF %>% filter(position %in% lseq) %>% 
+  mutate(Left_Name = paste(LN,FN, sep=", ")) %>%
+  select(Left_Name)
+
+right <- retDF %>% filter(!(position %in% lseq)) %>%
+  mutate(Right_Name = paste(LN,FN, sep=", ")) %>%
+  select(Right_Name)
+
+if(numRSVP%%2==1){
+  right <- rbind.data.frame(right, data.frame(Right_Name=" "))
+}
+
+cbind.data.frame(lseq,left,right) %>% kable("latex", booktabs=TRUE) %>% 
+  kable_styling(latex_options = c("stiped", "scale_down"))
+```
+
+## Additional Possible Attendees
+The following have not confirmed attendence, if any do attend they will march in the following order **after** the above list of attendees.
+
+```{r notAttend}
+lenNC <- (numRSVP+length(notComing$LN))
+lseq2 <- seq(from=ifelse(numRSVP%%2==1, numRSVP, numRSVP+1), to=lenNC, by=2)
+
+left2 <- notComing %>% filter(position %in% lseq2) %>% 
+  mutate(Left_Name = paste(LN,FN, sep=", ")) %>%
+  select(Left_Name)
+
+right2 <- notComing %>% filter(!(position %in% lseq2)) %>%
+  mutate(Right_Name = paste(LN,FN, sep=", ")) %>%
+  select(Right_Name)
+
+if(lenNC%%2==1){
+  right2 <- rbind.data.frame(right2, data.frame(Right_Name=" "))
+}
+
+cbind.data.frame(lseq2,left2,right2) %>% kable("latex", booktabs=TRUE) %>% 
+  kable_styling(latex_options = c("stiped", "scale_down"))
+```

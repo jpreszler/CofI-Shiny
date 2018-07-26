@@ -28,15 +28,25 @@ ui <- fluidPage(
 server <- function(input, output) {
   
   output$download_order <- downloadHandler(
-    filename = paste0("March_Order-", Sys.Date(),".pdf"),
+    filename = "March_Order.pdf",
     content = function(file) {
       req(input$Full_Roster)
       req(input$RSVP_Roster)
-      FullDF <- read_excel(input$Full_Roster$datapath, col_names =TRUE, skip=1) %>% 
-        select(LN=`Last Name`, FN=`First Name`,Yrs=`Decimal Years Since Hire Date`) 
-      RSVP <- read_excel(input$RSVP_Roster$datapath, col_names = TRUE, skip=1) %>%
-        select(LN=`Last Name`, FN=`First Name`)
       
+      tempReport <- file.path(tempdir(), "March_Order.Rmd")
+      file.copy("March_Order.Rmd", tempReport, overwrite = TRUE)
+      
+      # Set up parameters to pass to Rmd document
+      param_list <- list(full = input$Full_Roster$datapath, rsvp = input$RSVP_Roster$datapath)
+      
+      # Knit the document, passing in the `params` list, and eval it in a
+      # child of the global environment (this isolates the code in the document
+      # from the code in this app).
+      out <- rmarkdown::render(tempReport, 
+                        params = param_list,
+                        envir = new.env(parent = globalenv())
+      )
+      file.rename(out, file)
     }
   )
 }
