@@ -3,6 +3,7 @@ title: "March Order"
 author: "CofI-Shiny"
 date: "`r Sys.Date()`"
 header-includes:
+  - \usepackage{longtable}
   - \usepackage{booktabs}
   - \usepackage{float}
 output: pdf_document
@@ -57,8 +58,8 @@ if(numRSVP%%2==1){
   right <- rbind.data.frame(right, data.frame(Right_Name=" "))
 }
 
-cbind.data.frame(lseq,left,right) %>% kable("latex", booktabs=TRUE) %>% 
-  kable_styling(latex_options = c("stiped", "scale_down"))
+cbind.data.frame(lseq,left,right) %>% kable("latex", longtable = TRUE, booktabs=TRUE) %>% 
+  kable_styling(latex_options = c("stiped", "repeat_header"))
 ```
 
 ## Additional Possible Attendees
@@ -80,6 +81,6 @@ if(lenNC%%2==1){
   right2 <- rbind.data.frame(right2, data.frame(Right_Name=" "))
 }
 
-cbind.data.frame(lseq2,left2,right2) %>% kable("latex", booktabs=TRUE) %>% 
-  kable_styling(latex_options = c("stiped", "scale_down"))
+cbind.data.frame(lseq2,left2,right2) %>% kable("latex", longtable = TRUE, booktabs=TRUE) %>% 
+  kable_styling(latex_options = c("stiped", "repeat_header"))
 ```
