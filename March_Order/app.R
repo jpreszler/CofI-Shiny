@@ -7,7 +7,7 @@ library(markdown)
 
 ui <- fluidPage(
    
-   titlePanel("the College of Idaho March Order"),
+   titlePanel(img(src='logo.jpg', align="center")),
    
    sidebarLayout(
       sidebarPanel(

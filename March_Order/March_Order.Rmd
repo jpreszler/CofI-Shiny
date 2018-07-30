@@ -15,6 +15,7 @@ params:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 library(dplyr)
+library(tidyr)
 library(readxl)
 library(knitr)
 library(kableExtra)
@@ -22,13 +23,14 @@ library(kableExtra)
 ```
 
 ```{r}
-FullDF <- read_excel(params$full, col_names =TRUE, skip=1) %>% select(LN=`Last Name`, FN=`First Name`,Yrs=`Decimal Years Since Hire Date`) 
+FullDF <- read_excel(params$full, col_names =TRUE, skip=1) %>% select(Email = `email address`, LN=`Last Name`, FN=`First Name`, Yrs=`Decimal Years Since Hire Date`) 
 
-RSVP <- read_excel(params$rsvp, col_names = TRUE) %>% select(Name, Response=`Will you be part of the procession for the 2018 Convocation?`) %>% filter(Response == "Yes") %>% separate(col=Name, into = c("FN", "LN"), sep = "[:space:]", extra = 'merge')
+RSVP <- read_excel(params$rsvp, col_names = TRUE) %>% select(Email, Name, Response=`Will you be part of the procession for the 2018 Convocation?`) %>% filter(Response == "Yes") %>% separate(col=Name, into = c("FN.rsvp", "LN"), sep = "[:space:]", extra = 'merge') %>% mutate(Email = tolower(Email))
 
-retDF <- inner_join(FullDF, RSVP, by=c("LN","FN")) %>% 
+RSVP <- RSVP[!duplicated(RSVP),] #remove duplicate responses
+retDF <- inner_join(FullDF, RSVP, by=c("Email", "LN")) %>% 
   arrange(desc(Yrs), LN) 
-notComing <- anti_join(FullDF, RSVP, by=c("LN","FN")) %>% 
+notComing <- anti_join(FullDF, RSVP, by=c("Email", "LN")) %>% 
   arrange(desc(Yrs), LN)
 
 numRSVP <- length(retDF$LN)
@@ -47,18 +49,18 @@ The following have confirmed their attendence.
 lseq <- seq(from=1, to=numRSVP, by=2)
 
 left <- retDF %>% filter(position %in% lseq) %>% 
-  mutate(Left_Name = paste(LN,FN, sep=", ")) %>%
+  mutate(Left_Name = paste(LN,FN.rsvp, sep=", ")) %>%
   select(Left_Name)
 
 right <- retDF %>% filter(!(position %in% lseq)) %>%
-  mutate(Right_Name = paste(LN,FN, sep=", ")) %>%
+  mutate(Right_Name = paste(LN,FN.rsvp, sep=", ")) %>%
   select(Right_Name)
 
 if(numRSVP%%2==1){
   right <- rbind.data.frame(right, data.frame(Right_Name=" "))
 }
 
-cbind.data.frame(lseq,left,right) %>% kable("latex", longtable = TRUE, booktabs=TRUE, caption = "Confirmed Attendees") %>% 
+cbind.data.frame(Position=lseq,left,right) %>% kable("latex", longtable = TRUE, booktabs=TRUE, caption = "Confirmed Attendees") %>% 
   kable_styling(latex_options = c("stiped", "repeat_header"))
 ```
 
@@ -67,7 +69,7 @@ The following have not confirmed attendence, if any do attend they will march in
 
 ```{r notAttend}
 lenNC <- (numRSVP+length(notComing$LN))
-lseq2 <- seq(from=ifelse(numRSVP%%2==1, numRSVP, numRSVP+1), to=lenNC, by=2)
+lseq2 <- seq(from=ifelse(numRSVP%%2==1, numRSVP+2, numRSVP+1), length.out = length(notComing$LN)/2, by=2)
 
 left2 <- notComing %>% filter(position %in% lseq2) %>% 
   mutate(Left_Name = paste(LN,FN, sep=", ")) %>%
@@ -77,10 +79,12 @@ right2 <- notComing %>% filter(!(position %in% lseq2)) %>%
   mutate(Right_Name = paste(LN,FN, sep=", ")) %>%
   select(Right_Name)
 
-if(lenNC%%2==1){
+if(length(right2$Right_Name)>length(left2$Left_Name) ){
+  left2 <- rbind.data.frame(data.frame(Left_Name = " "), left2)
+} else{
   right2 <- rbind.data.frame(right2, data.frame(Right_Name=" "))
 }
 
-cbind.data.frame(lseq2,left2,right2) %>% kable("latex", longtable = TRUE, booktabs=TRUE, caption = "Possible Attendees") %>% 
+cbind.data.frame(Position=lseq2,left2,right2) %>% kable("latex", longtable = TRUE, booktabs=TRUE, caption = "Possible Attendees") %>% 
   kable_styling(latex_options = c("stiped", "repeat_header"))
 ```
