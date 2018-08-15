@@ -31,10 +31,10 @@ tgDF <- function(yrStr){
              End.Time) %>%
   filter(Semester=="FA" | Semester=="SP") %>% 
   mutate(Start.Time = as.POSIXct(strptime(Start.Time, 
-                                          format = "%I:%M %p")), 
-         End.Time = as.POSIXct(strptime(End.Time, format = "%I:%M %p"))) %>%
-  filter(Start.Time>strptime("7:50 AM", "%I:%M %p"),
-         End.Time<strptime("5:10 PM", "%I:%M %p"), 
+                                          format = "%I:%M %p", tz="America/Boise")), 
+         End.Time = as.POSIXct(strptime(End.Time, format = "%I:%M %p", tz="America/Boise"))) %>%
+  filter(Start.Time>strptime("7:50 AM", "%I:%M %p", tz="America/Boise"),
+         End.Time<strptime("5:10 PM", "%I:%M %p", tz="America/Boise"), 
          Division != "Other")%>%
   gather(key=SE, value=time, -c(Crs.Name, Division, Semester, Days)) %>%
   group_by(time, SE, Days, Semester, Division) %>%
@@ -49,7 +49,7 @@ timeGraph <- function(tgDF, dayStr){
   filter(tgDF, Days %in% dayStr) %>%
     ggplot(aes(x=time, y=cumsum(ifelse(SE=="Start.Time", crs.cnt, -1*crs.cnt)), col=Division)) + 
     geom_smooth(se=FALSE)+ facet_wrap(~Semester) +
-    scale_x_datetime(breaks = date_breaks("2 hour"),labels=date_format("%I:%M",tz="MST"))+
+    scale_x_datetime(breaks = date_breaks("2 hour"),labels=date_format("%I:%M", tz="America/Boise"))+
     ylab("Number of Courses")+ggtitle("Number of Classes by Division and Semester")
 }
 

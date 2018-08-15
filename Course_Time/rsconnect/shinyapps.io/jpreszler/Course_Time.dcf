@@ -1,0 +1,12 @@
+name: Course_Time
+title: Course_Time
+username:
+account: jpreszler
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 400490
+bundleId: 1536648
+url: https://jpreszler.shinyapps.io/Course_Time/
+when: 1534356117.3658
+asMultiple: FALSE
+asStatic: FALSE
