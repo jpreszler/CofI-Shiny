@@ -17,16 +17,16 @@ library(stringr)
 
 #load IR data, from Teagle-cleaned-flat-non-blank, merged with current(18-19)
 #catalog and basic mutate done from hist3
-dump <- read.csv("course-time-data.csv") %>% rename(Dept=`Dept.`)
+dump <- read.csv("course-time-data.csv") %>% mutate(Subject = str_split(Crs.Name, "-", simplify=TRUE)[,1]) %>% filter(Division != "Other")
 
 #the main data processing function
 library(scales)
-tgDF <- function(yrStr, bldStr){
-  if(yrStr=="All")
-    dumpF <- dump
+tgDF <- function(yrStr, bldStr, df){
+  if(str_detect(yrStr,"All"))
+    dumpF <- df
   else
-    dumpF <- filter(dump, Year %in% yrStr)
-  if(bldStr!="All")
+    dumpF <- filter(df, Year %in% yrStr)
+  if(!str_detect(bldStr,"All"))
     dumpF <- filter(dumpF, Bldg %in% bldStr)
   return(
     select(dumpF, Crs.Name, Division, Semester, Days, Start.Time, 
@@ -36,8 +36,7 @@ tgDF <- function(yrStr, bldStr){
                                           format = "%I:%M %p", tz="America/Boise")), 
          End.Time = as.POSIXct(strptime(End.Time, format = "%I:%M %p", tz="America/Boise"))) %>%
   filter(Start.Time>strptime("7:50 AM", "%I:%M %p", tz="America/Boise"),
-         End.Time<strptime("5:10 PM", "%I:%M %p", tz="America/Boise"), 
-         Division != "Other")%>%
+         End.Time<strptime("5:10 PM", "%I:%M %p", tz="America/Boise"))%>%
   gather(key=SE, value=time, -c(Crs.Name, Division, Semester, Days)) %>%
   group_by(time, SE, Days, Semester, Division) %>%
   summarise(crs.cnt=n())
@@ -53,11 +52,8 @@ timeGraph <- function(tgDF, dayStr){
     geom_line(size=2)+#geom_smooth(se=TRUE,n=n, span=spStr)+ 
     facet_wrap(~Semester) +
     scale_x_datetime(breaks = date_breaks("2 hour"),labels=date_format("%I:%M", tz="America/Boise"))+
-    ylab("Number of Courses")+ggtitle("Number of Classes by Division and Semester")
+    ylab("Number of Courses")+ggtitle("Number of Classes by Semester")
 }
-
-
-
 
 
 ui <- fluidPage(
@@ -79,7 +75,7 @@ ui <- fluidPage(
         radioButtons("divDept", label = h3("Separate by:"), 
                      choices = list("Divisions", "Subjects"), selected = "Divisions"),
         selectizeInput("seps", label = h3("Subjects: (up to 4)"), 
-                       choices = as.list(sort(unique(as.character(dump$Dept)))), 
+                       choices = as.list(sort(unique(as.character(dump$Subject)))), 
                        selected = NULL, options = list(maxItems = 4))
         
       ),
@@ -95,7 +91,12 @@ server <- function(input, output) {
 
 
    output$distPlot <- renderPlot({
-     tg <- tgDF(input$Years, input$Buildings)
+     if(input$divDept == "Subjects"){
+       dfset <- filter(dump, Subject %in% input$seps) %>% select(-Division) %>% rename(Division = Subject)
+     }
+     else
+       dfset <- dump
+     tg <- tgDF(input$Years, input$Buildings, dfset)
      tg <- tg[order(tg$time),]
      timeGraph(tg, input$dayStr)
    })
