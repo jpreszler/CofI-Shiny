@@ -67,16 +67,20 @@ ui <- fluidPage(
    
    sidebarLayout(
       sidebarPanel(
-        checkboxGroupInput("dayStr", label = h3("Meeting Days"), 
+        selectInput("dayStr", label = h3("Meeting Days"), 
                            choices = list("MWF" , "TTH",  "T", "TH", "W","M","MW","MTWF", "MF","F"),
-                           selected = "MWF"),
-        checkboxGroupInput("Years", label = h3("Years to Include"),
+                           selected = "MWF", multiple = TRUE),
+        selectInput("Years", label = h3("Years to Include"),
                            choices = as.list(c("All", sort(unique(dump$Year)))),
-                           selected = "All"),
-        checkboxGroupInput("Buildings", label = h3("Classes Meeting in:"),
+                           selected = "All", multiple = TRUE),
+        selectInput("Buildings", label = h3("Classes Meeting in:"),
                            choices = as.list(c("All", sort(unique(as.character(dump$Bldg))))),
-                           selected = "All")
-        
+                           selected = "All", multiple = TRUE),
+        radioButtons("divDept", label = h3("Separate by:"), 
+                     choices = list("Divisions", "Subjects"), selected = "Divisions"),
+        selectizeInput("seps", label = h3("Subjects: (up to 4)"), 
+                       choices = as.list(sort(unique(as.character(dump$Dept)))), 
+                       selected = NULL, options = list(maxItems = 4))
         
       ),
       
@@ -88,7 +92,8 @@ ui <- fluidPage(
 
 # Define server logic required
 server <- function(input, output) {
-   
+
+
    output$distPlot <- renderPlot({
      tg <- tgDF(input$Years, input$Buildings)
      tg <- tg[order(tg$time),]
