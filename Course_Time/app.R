@@ -33,28 +33,82 @@ tgDF <- function(yrStr, bldStr, df){
              End.Time) %>%
   filter(Semester=="FA" | Semester=="SP") %>% 
   mutate(Start.Time = as.POSIXct(strptime(Start.Time, 
-                                          format = "%I:%M %p", tz="America/Boise")), 
-         End.Time = as.POSIXct(strptime(End.Time, format = "%I:%M %p", tz="America/Boise"))) %>%
-  filter(Start.Time>strptime("7:50 AM", "%I:%M %p", tz="America/Boise"),
-         End.Time<strptime("5:10 PM", "%I:%M %p", tz="America/Boise"))%>%
+                                          format = "%I:%M %p", tz="MDT")), 
+         End.Time = as.POSIXct(strptime(End.Time, format = "%I:%M %p", tz="MDT"))) %>%
+  filter(Start.Time>strptime("7:50 AM", "%I:%M %p", tz="MDT"),
+         End.Time<strptime("5:10 PM", "%I:%M %p", tz="MDT"))%>%
   gather(key=SE, value=time, -c(Crs.Name, Division, Semester, Days)) %>%
   group_by(time, SE, Days, Semester, Division) %>%
   summarise(crs.cnt=n())
 )
 }
 
+etgDF <- function(yrStr, bldStr, df){
+  if(str_detect(yrStr,"All"))
+    dumpF <- df
+  else
+    dumpF <- filter(df, Year %in% yrStr)
+  if(!str_detect(bldStr,"All"))
+    dumpF <- filter(dumpF, Bldg %in% bldStr)
+  return(
+    select(dumpF, Crs.Name, Division, Semester, Days, Start.Time, 
+           End.Time, Enrolled) %>%
+      filter(Semester=="FA" | Semester=="SP") %>% 
+      mutate(Start.Time = as.POSIXct(strptime(Start.Time, 
+                                              format = "%I:%M %p", tz="MDT")), 
+             End.Time = as.POSIXct(strptime(End.Time, format = "%I:%M %p", tz="MDT"))) %>%
+      filter(Start.Time>strptime("7:50 AM", "%I:%M %p", tz="MDT"),
+             End.Time<strptime("5:10 PM", "%I:%M %p", tz="MDT"))%>%
+#      select(-c(Enroll.Cap, Enrolled)) %>%
+      gather(key=SE, value=time, -c(Crs.Name, Division, Semester, Days, Enrolled)) %>%
+      group_by(time, SE, Days, Semester, Division) %>%
+      summarise(crs.cnt=n(), Total_Enrollment = sum(Enrolled))
+  )
+}
+
+DTtgDF <- function(yrStr, bldStr, df){
+  if(str_detect(yrStr,"All"))
+    dumpF <- df
+  else
+    dumpF <- filter(df, Year %in% yrStr)
+  if(!str_detect(bldStr,"All"))
+    dumpF <- filter(dumpF, Bldg %in% bldStr)
+  return(
+    select(dumpF, Crs.Name, Division, Semester, Days, Start.Time, 
+           End.Time, Enrolled) %>%
+      filter(Semester=="FA" | Semester=="SP") %>% 
+      mutate(Start.Time = as.POSIXct(strptime(Start.Time, 
+                                              format = "%I:%M %p", tz="MDT")), 
+             End.Time = as.POSIXct(strptime(End.Time, format = "%I:%M %p", tz="MDT"))) %>%
+      filter(Start.Time>strptime("7:50 AM", "%I:%M %p", tz="MDT"),
+             End.Time<strptime("5:10 PM", "%I:%M %p", tz="MDT"))%>%
+      #      select(-c(Enroll.Cap, Enrolled)) %>%
+      gather(key=SE, value=time, -c(Crs.Name, Division, Semester, Days, Enrolled)) %>%
+      group_by(time, SE, Days, Semester, Division, Crs.Name) %>%
+      summarise(crs.cnt=n(), Total_Enrollment = sum(Enrolled))
+  )
+}
+
 #tg$time <- as.POSIXct(strptime(tg$time, format = "%I:%M %p"))
  #%>% filter(time>strptime("7:50 AM", "%I:%M %p"),time<strptime("5:10 PM", "%I:%M %p"))
+
+etimeGraph <- function(etgDF, dayStr){
+  filter(etgDF, Days %in% dayStr) %>%
+    ggplot(aes(x=time, y=cumsum(ifelse(SE=="Start.Time", Total_Enrollment, -1*Total_Enrollment))/cumsum(ifelse(SE=="Start.Time", crs.cnt, -1*crs.cnt)), col=Division)) + 
+    geom_line(size=2)+#geom_smooth(se=TRUE,n=n, span=spStr)+ 
+    facet_wrap(~Semester) +
+    scale_x_datetime(breaks = date_breaks("2 hour"),labels=date_format("%I:%M", tz="MDT"))+
+    ylab("Average Enrollment")+ggtitle("Average Enrollment by Semester")
+}
 
 timeGraph <- function(tgDF, dayStr){
   filter(tgDF, Days %in% dayStr) %>%
     ggplot(aes(x=time, y=cumsum(ifelse(SE=="Start.Time", crs.cnt, -1*crs.cnt)), col=Division)) + 
     geom_line(size=2)+#geom_smooth(se=TRUE,n=n, span=spStr)+ 
     facet_wrap(~Semester) +
-    scale_x_datetime(breaks = date_breaks("2 hour"),labels=date_format("%I:%M", tz="America/Boise"))+
+    scale_x_datetime(breaks = date_breaks("2 hour"),labels=date_format("%I:%M", tz="MDT"))+
     ylab("Number of Courses")+ggtitle("Number of Classes by Semester")
 }
-
 
 ui <- fluidPage(
    
@@ -81,8 +135,14 @@ ui <- fluidPage(
       ),
       
       mainPanel(
-         plotOutput("distPlot")
+        tabsetPanel(type = "tabs",
+          tabPanel("Plots", plotOutput("numCoursePlot"),
+         br()#,
+ #        plotOutput("enrollPlot")
+ ),
+         tabPanel("Data", dataTableOutput("etgDT"))
       )
+      )  
    )
 )
 
@@ -90,7 +150,7 @@ ui <- fluidPage(
 server <- function(input, output) {
 
 
-   output$distPlot <- renderPlot({
+   output$numCoursePlot <- renderPlot({
      if(input$divDept == "Subjects"){
        dfset <- filter(dump, Subject %in% input$seps) %>% select(-Division) %>% rename(Division = Subject)
      }
@@ -99,6 +159,34 @@ server <- function(input, output) {
      tg <- tgDF(input$Years, input$Buildings, dfset)
      tg <- tg[order(tg$time),]
      timeGraph(tg, input$dayStr)
+   })
+   
+   output$enrollPlot <- renderPlot({
+     if(input$divDept == "Subjects"){
+       dfset <- filter(dump, Subject %in% input$seps) %>% select(-Division) %>% rename(Division = Subject)
+     }
+     else
+       dfset <- dump
+     etg <- etgDF(input$Years, input$Buildings, dfset)
+     etg <- etg[order(etg$time),]
+     etimeGraph(etg, input$dayStr)
+     
+   })
+   
+   output$etgDT <- renderDataTable({
+     if(input$divDept == "Subjects"){
+       dfset <- filter(dump, Subject %in% input$seps) %>% select(-Division) %>% rename(Division = Subject)
+     }
+     else
+       dfset <- dump
+     dt <- DTtgDF(input$Years, input$Buildings, dfset)
+     dt <- dt[order(dt$time),]
+     dt %>% filter(Days %in% input$dayStr) %>% 
+       mutate(Time = strftime(time, format = "%H:%M %p", tz="MDT", usetz=TRUE)) %>%
+       ungroup() %>%
+       mutate(Avg_Enrollment = round(Total_Enrollment/crs.cnt,2)) %>%
+       select(Time, SE, Semester, Crs.Name, crs.cnt, Avg_Enrollment) %>%
+       datatable(rownames = FALSE, filter = "top")
    })
 }
 
