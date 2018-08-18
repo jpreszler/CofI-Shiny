@@ -17,7 +17,10 @@ library(stringr)
 
 #load IR data, from Teagle-cleaned-flat-non-blank, merged with current(18-19)
 #catalog and basic mutate done from hist3
-dump <- read.csv("course-time-data.csv") %>% mutate(Subject = str_split(Crs.Name, "-", simplify=TRUE)[,1]) %>% filter(Division != "Other")
+dump <- read.csv("course-time-data.csv") %>% 
+  mutate(Subject = str_split(Crs.Name, "-", simplify=TRUE)[,1]) %>% 
+  filter(Division != "Other") %>%
+  mutate(Year = ifelse(Semester=="FA", Year+1, Year))
 
 #the main data processing function
 library(scales)
@@ -89,13 +92,11 @@ DTtgDF <- function(yrStr, bldStr, df){
   )
 }
 
-#tg$time <- as.POSIXct(strptime(tg$time, format = "%I:%M %p"))
- #%>% filter(time>strptime("7:50 AM", "%I:%M %p"),time<strptime("5:10 PM", "%I:%M %p"))
-
 etimeGraph <- function(etgDF, dayStr){
-  filter(etgDF, Days %in% dayStr) %>%
-    ggplot(aes(x=time, y=cumsum(ifelse(SE=="Start.Time", Total_Enrollment, -1*Total_Enrollment))/cumsum(ifelse(SE=="Start.Time", crs.cnt, -1*crs.cnt)), col=Division)) + 
-    geom_line(size=2)+#geom_smooth(se=TRUE,n=n, span=spStr)+ 
+  filter(etgDF, Days %in% dayStr) %>% 
+    mutate(Avg_Enrollment = Total_Enrollment/crs.cnt, cTE = cumsum(ifelse(SE=="Start.Time",Total_Enrollment,-1*Total_Enrollment)), cCC =cumsum(ifelse(SE=="Start.Time", crs.cnt, -1*crs.cnt))) %>%
+    ggplot(aes(x=time, y=ifelse(cCC==0, 0, cTE/cCC), col=Division)) + 
+    geom_line(size=2)+ 
     facet_wrap(~Semester) +
     scale_x_datetime(breaks = date_breaks("2 hour"),labels=date_format("%I:%M", tz="MDT"))+
     ylab("Average Enrollment")+ggtitle("Average Enrollment by Semester")
@@ -137,8 +138,8 @@ ui <- fluidPage(
       mainPanel(
         tabsetPanel(type = "tabs",
           tabPanel("Plots", plotOutput("numCoursePlot"),
-         br()#,
- #        plotOutput("enrollPlot")
+         br(),
+        plotOutput("enrollPlot")
  ),
          tabPanel("Data", dataTableOutput("etgDT"))
       )
