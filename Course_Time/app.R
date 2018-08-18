@@ -137,11 +137,13 @@ ui <- fluidPage(
       
       mainPanel(
         tabsetPanel(type = "tabs",
-          tabPanel("Plots", plotOutput("numCoursePlot"),
+         tabPanel("Information", includeMarkdown("Instructions.md")),
+        tabPanel("Plots", plotOutput("numCoursePlot"),
          br(),
         plotOutput("enrollPlot")
  ),
          tabPanel("Data", dataTableOutput("etgDT"))
+ 
       )
       )  
    )
