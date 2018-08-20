@@ -14,7 +14,7 @@ library(ggplot2)
 library(purrr)
 library(tidyr)
 library(stringr)
-
+library(markdown)
 #load IR data, from Teagle-cleaned-flat-non-blank, merged with current(18-19)
 #catalog and basic mutate done from hist3
 dump <- read.csv("course-time-data.csv") %>% 
