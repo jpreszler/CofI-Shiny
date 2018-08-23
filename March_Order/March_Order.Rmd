@@ -81,7 +81,8 @@ right2 <- notComing %>% filter(!(position %in% lseq2)) %>%
 
 if(length(right2$Right_Name)>length(left2$Left_Name) ){
   left2 <- rbind.data.frame(data.frame(Left_Name = " "), left2)
-} else{
+}
+if(length(right2$Right_Name)<length(left2$Left_Name) ){
   right2 <- rbind.data.frame(right2, data.frame(Right_Name=" "))
 }
 
