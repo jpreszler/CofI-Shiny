@@ -56,8 +56,13 @@ right <- retDF %>% filter(!(position %in% lseq)) %>%
   mutate(Right_Name = paste(LN,FN.rsvp, sep=", ")) %>%
   select(Right_Name)
 
-if(numRSVP%%2==1){
+#if(numRSVP%%2==1){
+if(length(left$Left_Name) > length(right$Right_Name)){
   right <- rbind.data.frame(right, data.frame(Right_Name=" "))
+}
+#shouldn't run - but if left is blank and right isn't on attendees we'll know
+if(length(left$Left_Name) < length(right$Right_Name)){
+  left <- rbind.data.frame(left, data.frame(Left_Name=" "))
 }
 
 cbind.data.frame(Position=lseq,left,right) %>% kable("latex", longtable = TRUE, booktabs=TRUE, caption = "Confirmed Attendees") %>% 
