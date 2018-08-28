@@ -28,9 +28,9 @@ FullDF <- read_excel(params$full, col_names =TRUE, skip=1) %>% select(Email = `e
 RSVP <- read_excel(params$rsvp, col_names = TRUE) %>% select(Email, Name, Response=`Will you be participating in the Convocation ceremony?`) %>% filter(Response == "Yes") %>% separate(col=Name, into = c("FN.rsvp", "LN"), sep = "[:space:]", extra = 'merge') %>% mutate(Email = tolower(Email))
 
 RSVP <- RSVP[!duplicated(RSVP),] #remove duplicate responses
-retDF <- inner_join(FullDF, RSVP, by=c("Email", "LN")) %>% 
+retDF <- inner_join(FullDF, RSVP, by="Email", suffix =  c("", ".rsvp")) %>% 
   arrange(desc(Yrs), LN) 
-notComing <- anti_join(FullDF, RSVP, by=c("Email", "LN")) %>% 
+notComing <- anti_join(FullDF, RSVP, by="Email", suffix = c("", ".rsvp")) %>% 
   arrange(desc(Yrs), LN)
 
 numRSVP <- length(retDF$LN)

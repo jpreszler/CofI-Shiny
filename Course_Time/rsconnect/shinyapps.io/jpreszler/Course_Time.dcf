@@ -5,8 +5,8 @@ account: jpreszler
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 400490
-bundleId: 1544873
+bundleId: 1544908
 url: https://jpreszler.shinyapps.io/Course_Time/
-when: 1534786617.82114
+when: 1534787703.31607
 asMultiple: FALSE
 asStatic: FALSE
