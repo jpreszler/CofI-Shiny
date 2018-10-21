@@ -16,6 +16,7 @@ library(tidyr)
 library(stringr)
 library(markdown)
 library(DT)
+library(plotly)
 #load IR data, from Teagle-cleaned-flat-non-blank, merged with current(18-19)
 #catalog and basic mutate done from hist3
 dump <- read.csv("course-time-data.csv") %>% 
@@ -96,30 +97,31 @@ DTtgDF <- function(yrStr, bldStr, df){
 }
 
 etimeGraph <- function(etgDF, dayStr){
-  filter(etgDF, Days %in% dayStr) %>% 
+ filter(etgDF, Days %in% dayStr) %>% 
     mutate(Avg_Enrollment = Total_Enrollment/crs.cnt, cTE = cumsum(ifelse(SE=="Start.Time",Total_Enrollment,-1*Total_Enrollment)), cCC =cumsum(ifelse(SE=="Start.Time", crs.cnt, -1*crs.cnt))) %>%
     ggplot(aes(x=time, y=ifelse(cCC==0, 0, cTE/cCC), col=Division)) + 
-    geom_line(aes(linetype=Days))+#size=2)+ 
-    geom_point()+
+    geom_step(aes(linetype=Days))+#size=2)+ 
+    #geom_point()+
     facet_wrap(~Semester) +
     scale_color_manual(values=cbbPalette)+
     scale_linetype_manual(values = c("solid", "longdash", "dotted"))+
     scale_x_datetime(breaks = date_breaks("2 hour"),labels=date_format("%I:%M", tz="MDT"))+
     ylab("Average Enrollment")+ggtitle("Average Enrollment by Semester")+
-    theme_bw()
+    theme_bw() 
 }
 
 
 timeGraph <- function(tgDF, dayStr){
   filter(tgDF, Days %in% dayStr) %>%
     ggplot(aes(x=time, y=cumsum(ifelse(SE=="Start.Time", crs.cnt, -1*crs.cnt)), col=Division)) + 
-    geom_line(aes(linetype=Days))+geom_point()+#,size=2)+#geom_smooth(se=TRUE,n=n, span=spStr)+ 
+    geom_step(aes(linetype=Days))+#geom_point()+#,size=2)+#geom_smooth(se=TRUE,n=n, span=spStr)+ 
     facet_wrap(~Semester) +
     scale_linetype_manual(values = c("solid", "longdash", "dotted"))+
     scale_color_manual(values = cbbPalette)+
     scale_x_datetime(breaks = date_breaks("2 hour"),labels=date_format("%I:%M", tz="MDT"))+
     ylab("Number of Courses")+ggtitle("Number of Classes by Semester")+
     theme_bw()
+
 }
 
 ui <- fluidPage(
@@ -173,7 +175,7 @@ server <- function(input, output) {
      tg <- tgDF(input$Years, input$Buildings, dfset)
      tg <- tg[order(tg$time),]
      timeGraph(tg, input$dayStr)
-   })
+     })
    
    output$enrollPlot <- renderPlot({
      if(input$divDept == "Subjects"){
@@ -185,6 +187,7 @@ server <- function(input, output) {
      etg <- etg[order(etg$time),]
      etimeGraph(etg, input$dayStr)
      
+
    })
    
    output$etgDT <- renderDataTable({
