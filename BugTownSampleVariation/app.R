@@ -90,9 +90,12 @@ df <- reactive({
        geom_text(aes(label=apartNumber))+theme_void()
    })
    output$apartHist <- renderPlot({
+     areas <- bugtownDF %>% group_by(apartNumber) %>% summarise(area=max(area)) 
      df() %>% filter(Apt>0, Apt<101) %>%
-     ggplot(aes(x=Apt, fill=method))+
-       geom_histogram(position = "dodge", bins=100)
+       left_join(areas, by=c("Apt"="apartNumber")) %>%
+       ggplot(aes(x=area, fill=method))+
+       geom_histogram(position = "dodge", bins=13)+
+       scale_x_continuous(breaks=c(1,2,3,4,5,6,8,9,10,12,15,16,18))
    })
    output$scatter <- renderPlot({
      results() %>% 

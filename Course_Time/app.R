@@ -16,12 +16,15 @@ library(tidyr)
 library(stringr)
 library(markdown)
 library(DT)
+library(plotly)
 #load IR data, from Teagle-cleaned-flat-non-blank, merged with current(18-19)
 #catalog and basic mutate done from hist3
 dump <- read.csv("course-time-data.csv") %>% 
   mutate(Subject = str_split(Crs.Name, "-", simplify=TRUE)[,1]) %>% 
   filter(Division != "Other") %>%
   mutate(Year = ifelse(Semester=="FA", Year+1, Year))
+
+cbbPalette <- c("#000000", "#E69F00",  "#009E73", "#56B4E9", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
 #the main data processing function
 library(scales)
@@ -79,7 +82,7 @@ DTtgDF <- function(yrStr, bldStr, df){
     dumpF <- filter(dumpF, Bldg %in% bldStr)
   return(
     select(dumpF, Crs.Name, Division, Semester, Days, Start.Time, 
-           End.Time, Enrolled) %>%
+           End.Time, Enrolled, Year) %>%
       filter(Semester=="FA" | Semester=="SP") %>% 
       mutate(Start.Time = as.POSIXct(strptime(Start.Time, 
                                               format = "%I:%M %p", tz="MDT")), 
@@ -87,29 +90,38 @@ DTtgDF <- function(yrStr, bldStr, df){
       filter(Start.Time>strptime("7:50 AM", "%I:%M %p", tz="MDT"),
              End.Time<strptime("5:10 PM", "%I:%M %p", tz="MDT"))%>%
       #      select(-c(Enroll.Cap, Enrolled)) %>%
-      gather(key=SE, value=time, -c(Crs.Name, Division, Semester, Days, Enrolled)) %>%
-      group_by(time, SE, Days, Semester, Division, Crs.Name) %>%
+      gather(key=SE, value=time, -c(Crs.Name, Year, Division, Semester, Days, Enrolled)) %>%
+      group_by(time, SE, Year, Days, Semester, Division, Crs.Name) %>%
       summarise(crs.cnt=n(), Total_Enrollment = sum(Enrolled))
   )
 }
 
 etimeGraph <- function(etgDF, dayStr){
-  filter(etgDF, Days %in% dayStr) %>% 
+ filter(etgDF, Days %in% dayStr) %>% 
     mutate(Avg_Enrollment = Total_Enrollment/crs.cnt, cTE = cumsum(ifelse(SE=="Start.Time",Total_Enrollment,-1*Total_Enrollment)), cCC =cumsum(ifelse(SE=="Start.Time", crs.cnt, -1*crs.cnt))) %>%
     ggplot(aes(x=time, y=ifelse(cCC==0, 0, cTE/cCC), col=Division)) + 
-    geom_line(size=2)+ 
+    geom_step(aes(linetype=Days))+#size=2)+ 
+    #geom_point()+
     facet_wrap(~Semester) +
+    scale_color_manual(values=cbbPalette)+
+    scale_linetype_manual(values = c("solid", "longdash", "dotted"))+
     scale_x_datetime(breaks = date_breaks("2 hour"),labels=date_format("%I:%M", tz="MDT"))+
-    ylab("Average Enrollment")+ggtitle("Average Enrollment by Semester")
+    ylab("Average Enrollment")+ggtitle("Average Enrollment by Semester")+
+    theme_bw() 
 }
+
 
 timeGraph <- function(tgDF, dayStr){
   filter(tgDF, Days %in% dayStr) %>%
     ggplot(aes(x=time, y=cumsum(ifelse(SE=="Start.Time", crs.cnt, -1*crs.cnt)), col=Division)) + 
-    geom_line(size=2)+#geom_smooth(se=TRUE,n=n, span=spStr)+ 
+    geom_step(aes(linetype=Days))+#geom_point()+#,size=2)+#geom_smooth(se=TRUE,n=n, span=spStr)+ 
     facet_wrap(~Semester) +
+    scale_linetype_manual(values = c("solid", "longdash", "dotted"))+
+    scale_color_manual(values = cbbPalette)+
     scale_x_datetime(breaks = date_breaks("2 hour"),labels=date_format("%I:%M", tz="MDT"))+
-    ylab("Number of Courses")+ggtitle("Number of Classes by Semester")
+    ylab("Number of Courses")+ggtitle("Number of Classes by Semester")+
+    theme_bw()
+
 }
 
 ui <- fluidPage(
@@ -163,7 +175,7 @@ server <- function(input, output) {
      tg <- tgDF(input$Years, input$Buildings, dfset)
      tg <- tg[order(tg$time),]
      timeGraph(tg, input$dayStr)
-   })
+     })
    
    output$enrollPlot <- renderPlot({
      if(input$divDept == "Subjects"){
@@ -175,6 +187,7 @@ server <- function(input, output) {
      etg <- etg[order(etg$time),]
      etimeGraph(etg, input$dayStr)
      
+
    })
    
    output$etgDT <- renderDataTable({
@@ -189,7 +202,7 @@ server <- function(input, output) {
        mutate(Time = strftime(time, format = "%H:%M %p", tz="MDT", usetz=TRUE)) %>%
        ungroup() %>%
        mutate(Avg_Enrollment = round(Total_Enrollment/crs.cnt,2)) %>%
-       select(Time, SE, Semester, Crs.Name, crs.cnt, Avg_Enrollment) %>%
+       select(Time, SE, Semester, Year, Days, Crs.Name, crs.cnt, Avg_Enrollment) %>%
        datatable(rownames = FALSE, filter = "top")
    })
 }
