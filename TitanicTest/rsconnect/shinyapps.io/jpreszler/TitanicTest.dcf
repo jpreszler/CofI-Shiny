@@ -1,0 +1,12 @@
+name: TitanicTest
+title: TitanicTest
+username:
+account: jpreszler
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 544130
+bundleId: 1673379
+url: https://jpreszler.shinyapps.io/TitanicTest/
+when: 1540955409.16282
+asMultiple: FALSE
+asStatic: FALSE

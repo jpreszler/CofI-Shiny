@@ -1,0 +1,12 @@
+name: Gutenberg-Clouds
+title: Gutenberg-Clouds
+username:
+account: jpreszler
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 638093
+bundleId: 1810038
+url: https://jpreszler.shinyapps.io/Gutenberg-Clouds/
+when: 1547258429.84131
+asMultiple: FALSE
+asStatic: FALSE
