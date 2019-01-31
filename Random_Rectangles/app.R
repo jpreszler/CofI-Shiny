@@ -16,7 +16,7 @@ library(googlesheets)
 #######
 #UPDATE EACH TERM?
 #######
-term<- "Fall 2018"
+term<- "Spring 2019"
 
 #get data
 bugtownDF <- read.csv("data.org", sep="|", header=TRUE, strip.white = TRUE)

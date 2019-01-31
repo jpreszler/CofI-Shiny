@@ -5,4 +5,4 @@ The purpose is to compare humans "random" choice (method2) versus true random sa
 
 Created by Jason Preszler, 2018
 
-Code on [GitHub](https://github.com/jpreszler/CofI-Shiny/BugTownSampleVariation/)
+Code on [GitHub](https://github.com/jpreszler/CofI-Shiny/tree/master/BugTownSampleVariation/)
